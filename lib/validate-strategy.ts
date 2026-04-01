@@ -1,7 +1,7 @@
 import { ROLE_GUARDS } from "./role-guards";
 import {
   RoleFamily,
-  SourcingStrategy,
+  SourcingStrategyV1,
   StrategyValidationResult,
 } from "./types";
 
@@ -31,7 +31,7 @@ function cleanStringArray(values: string[], bannedTerms: string[]): string[] {
     .filter(Boolean);
 }
 
-function gatherStrategyText(strategy: SourcingStrategy): string {
+function gatherStrategyText(strategy: SourcingStrategyV1): string {
   return [
     ...strategy.targetProfiles,
     ...strategy.searchChannels,
@@ -47,12 +47,12 @@ function containsSignal(text: string, signal: string): boolean {
 
 export function validateStrategyForRoleFamily(
   roleFamily: RoleFamily,
-  strategy: SourcingStrategy
+  strategy: SourcingStrategyV1
 ): StrategyValidationResult {
   const config = ROLE_GUARDS[roleFamily];
   const warnings: string[] = [];
 
-  const cleanedStrategy: SourcingStrategy = {
+  const cleanedStrategy: SourcingStrategyV1 = {
     targetProfiles: cleanStringArray(strategy.targetProfiles, config.bannedTerms),
     searchChannels: cleanStringArray(strategy.searchChannels, config.bannedTerms),
     keywords: cleanStringArray(strategy.keywords, config.bannedTerms),

@@ -1,7 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { SourcingStrategy } from "@/lib/types";
+import { SourcingStrategy, ProfileTier, ChannelPriority, FilterCategory } from "@/lib/types";
+
+const TIER_LABELS: Record<ProfileTier, string> = {
+  tier1: "Tier 1 — Start here",
+  tier2: "Tier 2 — Strong alternates",
+  tier3: "Tier 3 — Edge / long shot",
+};
+
+const TIER_COLORS: Record<ProfileTier, string> = {
+  tier1: "border-l-emerald-500",
+  tier2: "border-l-amber-500",
+  tier3: "border-l-zinc-400",
+};
+
+const CHANNEL_LABELS: Record<ChannelPriority, string> = {
+  primary: "Primary",
+  secondary: "Secondary",
+  edge: "Edge",
+};
+
+const CHANNEL_BADGES: Record<ChannelPriority, string> = {
+  primary: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+  secondary: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  edge: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+};
+
+const FILTER_LABELS: Record<FilterCategory, string> = {
+  "must-have": "Must-Have",
+  "strong-signal": "Strong Signal",
+  "nice-to-have": "Nice-to-Have",
+  "disqualifier": "Disqualifier",
+};
+
+const FILTER_COLORS: Record<FilterCategory, string> = {
+  "must-have": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200",
+  "strong-signal": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "nice-to-have": "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  "disqualifier": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+};
 
 export default function Home() {
   const [role, setRole] = useState("");
@@ -37,6 +75,10 @@ export default function Home() {
       setLoading(false);
     }
   }
+
+  const tiers: ProfileTier[] = ["tier1", "tier2", "tier3"];
+  const priorities: ChannelPriority[] = ["primary", "secondary", "edge"];
+  const filterOrder: FilterCategory[] = ["must-have", "strong-signal", "nice-to-have", "disqualifier"];
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-8">
@@ -103,44 +145,109 @@ export default function Home() {
 
         {strategy && (
           <div className="space-y-6 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+
+            {/* Tiered Target Profiles */}
             <section>
-              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
+              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
                 Target Profiles
               </h2>
-              <ul className="list-disc list-inside space-y-1 text-sm text-zinc-800 dark:text-zinc-200">
-                {(strategy?.targetProfiles ?? []).map((p, i) => (
-                  <li key={i}>{p}</li>
-                ))}
-              </ul>
+              <div className="space-y-4">
+                {tiers.map((tier) => {
+                  const profiles = (strategy.targetProfiles ?? []).filter(
+                    (p) => p.tier === tier
+                  );
+                  if (profiles.length === 0) return null;
+                  return (
+                    <div key={tier}>
+                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">
+                        {TIER_LABELS[tier]}
+                      </p>
+                      <ul className="space-y-1">
+                        {profiles.map((p, i) => (
+                          <li
+                            key={i}
+                            className={`border-l-2 ${TIER_COLORS[tier]} pl-3 text-sm text-zinc-800 dark:text-zinc-200`}
+                          >
+                            {p.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
 
+            {/* Prioritized Search Channels */}
             <section>
-              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
+              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
                 Search Channels
               </h2>
-              <ul className="list-disc list-inside space-y-1 text-sm text-zinc-800 dark:text-zinc-200">
-                {(strategy?.searchChannels ?? []).map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
+              <div className="space-y-3">
+                {priorities.map((priority) => {
+                  const channels = (strategy.searchChannels ?? []).filter(
+                    (c) => c.priority === priority
+                  );
+                  if (channels.length === 0) return null;
+                  return (
+                    <div key={priority}>
+                      <ul className="space-y-1">
+                        {channels.map((c, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200">
+                            <span className={`shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${CHANNEL_BADGES[priority]}`}>
+                              {CHANNEL_LABELS[priority]}
+                            </span>
+                            <span>{c.channel}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
 
+            {/* Candidate Filters */}
+            <section>
+              <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-3">
+                Candidate Filters
+              </h2>
+              <div className="space-y-2">
+                {filterOrder.map((category) => {
+                  const filters = (strategy.filters ?? []).filter(
+                    (f) => f.category === category
+                  );
+                  if (filters.length === 0) return null;
+                  return filters.map((f, i) => (
+                    <div key={`${category}-${i}`} className="flex items-start gap-2 text-sm">
+                      <span className={`shrink-0 mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${FILTER_COLORS[category]}`}>
+                        {FILTER_LABELS[category]}
+                      </span>
+                      <span className="text-zinc-800 dark:text-zinc-200">{f.signal}</span>
+                    </div>
+                  ));
+                })}
+              </div>
+            </section>
+
+            {/* Keywords */}
             <section>
               <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                 Keywords
               </h2>
               <div className="flex flex-wrap gap-2">
-                {(strategy?.keywords ?? []).map((k, i) => (
+                {(strategy.keywords ?? []).map((k, i) => (
                   <span
                     key={i}
-                    className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs"
-                    >
+                    className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300"
+                  >
                     {k}
                   </span>
                 ))}
               </div>
             </section>
 
+            {/* Boolean Search */}
             <section>
               <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                 Boolean Search
@@ -150,6 +257,7 @@ export default function Home() {
               </pre>
             </section>
 
+            {/* Outreach Angle */}
             <section>
               <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-2">
                 Outreach Angle

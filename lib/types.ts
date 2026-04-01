@@ -63,7 +63,8 @@ export interface HiringBrief {
   description: string;
 }
 
-export interface SourcingStrategy {
+// V1 flat shape — used internally by templates and validation
+export interface SourcingStrategyV1 {
   targetProfiles: string[];
   searchChannels: string[];
   keywords: string[];
@@ -71,8 +72,37 @@ export interface SourcingStrategy {
   sampleBooleanSearch: string;
 }
 
+// V2 tiered shape — the public output
+export type ProfileTier = "tier1" | "tier2" | "tier3";
+export type ChannelPriority = "primary" | "secondary" | "edge";
+export type FilterCategory = "must-have" | "strong-signal" | "nice-to-have" | "disqualifier";
+
+export interface TieredProfile {
+  tier: ProfileTier;
+  description: string;
+}
+
+export interface PrioritizedChannel {
+  priority: ChannelPriority;
+  channel: string;
+}
+
+export interface CandidateFilter {
+  category: FilterCategory;
+  signal: string;
+}
+
+export interface SourcingStrategy {
+  targetProfiles: TieredProfile[];
+  searchChannels: PrioritizedChannel[];
+  filters: CandidateFilter[];
+  keywords: string[];
+  outreachAngle: string;
+  sampleBooleanSearch: string;
+}
+
 export interface StrategyValidationResult {
-  strategy: SourcingStrategy;
+  strategy: SourcingStrategyV1;
   roleFamily: RoleFamily;
   warnings: string[];
 }

@@ -3,7 +3,7 @@ import {
   CompanyContext,
   RoleClassification,
   RoleFamily,
-  SourcingStrategy,
+  SourcingStrategyV1,
 } from "./types";
 import { classifyCompany } from "./classify-company";
 
@@ -15,7 +15,7 @@ interface TemplateInputs {
   outreachTone: string;
 }
 
-type StrategyTemplate = (inputs: TemplateInputs) => SourcingStrategy;
+type StrategyTemplate = (inputs: TemplateInputs) => SourcingStrategyV1;
 
 function seatLabel(ctx: CompanyContext): string {
   switch (ctx.seatType) {
@@ -54,6 +54,7 @@ function poolList(ctx: CompanyContext): string {
 }
 
 const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
+
 
   sales: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
@@ -258,7 +259,7 @@ export async function generateMockStrategy(
   brief: HiringBrief,
   classification: RoleClassification,
   companyCtx: CompanyContext
-): Promise<SourcingStrategy> {
+): Promise<SourcingStrategyV1> {
   const archetypeResult = classifyCompany(brief);
   const template = TEMPLATES[classification.family];
 

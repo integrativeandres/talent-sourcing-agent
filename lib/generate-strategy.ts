@@ -3,6 +3,7 @@ import { interpretCompanyContext } from "./interpret-company";
 import { generateMockStrategy } from "./mock-llm";
 import { buildSourcingPrompt } from "./prompts";
 import { validateStrategyForRoleFamily } from "./validate-strategy";
+import { tierStrategy } from "./tier-strategy";
 import { HiringBrief, SourcingStrategy } from "./types";
 
 export async function generateStrategy(
@@ -32,5 +33,6 @@ export async function generateStrategy(
     );
   }
 
-  return validated.strategy;
+  // V2: tier profiles, prioritize channels, generate filters
+  return tierStrategy(validated.strategy, classification.family, companyCtx);
 }
