@@ -1,0 +1,130 @@
+import { RoleFamily } from "./types";
+
+export type RoleGuardConfig = {
+  bannedTerms: string[];
+  requiredSignals: string[];
+};
+
+export const ROLE_GUARDS: Record<RoleFamily, RoleGuardConfig> = {
+  sales: {
+    bannedTerms: [
+      "cac",
+      "paid media",
+      "seo",
+      "lifecycle marketing",
+      "demand generation",
+      "growth loops",
+      "nrr",
+      "onboarding",
+      "customer support",
+      "software engineer",
+      "sre",
+      "frontend",
+      "backend",
+      "customer success manager",
+    ],
+    requiredSignals: [
+      "pipeline",
+      "closing",
+      "deal",
+      "revenue",
+      "buyer",
+      "quota",
+    ],
+  },
+  marketing: {
+    bannedTerms: [
+      "vp sales",
+      "head of sales",
+      "account executive",
+      "quota",
+      "pipeline ownership",
+      "closing",
+      "book of business",
+      "executive buyers",
+      "customer support",
+      "software engineer",
+      "sre",
+      "frontend",
+      "backend",
+    ],
+    requiredSignals: [
+      "acquisition",
+      "funnel",
+      "conversion",
+      "demand",
+      "channel",
+      "experiment",
+    ],
+  },
+  customer_success: {
+    bannedTerms: [
+      "account executive",
+      "quota",
+      "closing",
+      "paid media",
+      "seo",
+      "demand generation",
+      "software engineer",
+      "sre",
+      "frontend",
+      "backend",
+      "call center",
+      "support agent",
+    ],
+    requiredSignals: [
+      "retention",
+      "expansion",
+      "onboarding",
+      "adoption",
+      "nrr",
+      "lifecycle",
+    ],
+  },
+  engineering: {
+    bannedTerms: [
+      "quota",
+      "pipeline",
+      "book of business",
+      "executive buyer",
+      "cac",
+      "paid media",
+      "nrr",
+      "retention",
+      "customer success",
+      "enterprise seller",
+    ],
+    requiredSignals: [
+      "system",
+      "architecture",
+      "technical",
+      "product",
+      "stack",
+      "ship",
+      "build",
+    ],
+  },
+  operations: {
+    bannedTerms: [
+      "quota",
+      "account executive",
+      "paid media",
+      "seo",
+      "software engineer",
+      "sre",
+      "frontend",
+      "backend",
+    ],
+    requiredSignals: [
+      "process",
+      "workflow",
+      "execution",
+      "systems",
+      "cross-functional",
+    ],
+  },
+  general: {
+    bannedTerms: [],
+    requiredSignals: [],
+  },
+};
