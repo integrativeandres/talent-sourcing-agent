@@ -254,6 +254,104 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
   }),
 };
 
+// ---------------------------------------------------------------------------
+// Archetype-specific overrides — patch the role-family template output
+// to make it native to the business model. Only override fields where
+// the archetype produces meaningfully different output.
+// ---------------------------------------------------------------------------
+
+type ArchetypeOverride = (
+  base: SourcingStrategyV1,
+  company: string,
+  ctx: CompanyContext
+) => Partial<SourcingStrategyV1>;
+
+const ARCHETYPE_OVERRIDES: Partial<Record<CompanyContext["archetype"], ArchetypeOverride>> = {
+
+  "info-product": (base, company, ctx) => ({
+    targetProfiles: [
+      `Revenue or growth operator at a high-ticket info-product, coaching, or education brand who has owned funnel conversion and program enrollment — understands webinar/VSL/live-event sales motions, not just SaaS pipeline`,
+      `VP or Head of Growth at a creator-led or personal-brand business (${poolList(ctx)}) who has scaled audience monetization through content, events, and high-ticket offers — speaks in enrollment rate and revenue per lead, not MQLs`,
+      `Commercial leader from a direct-response or funnel-driven business who has carried revenue targets tied to event fills, program launches, and high-ticket conversion — someone who operates at pace and owns the number`,
+      `Operator from an adjacent coaching or transformation company who understands the ${ctx.market} buyer — has sold programs to ${ctx.buyerType.toLowerCase()} and knows how to frame outcomes, not features`,
+      `Former founder or GM of a coaching, course, or membership business who has personally built the revenue engine — funnels, content, events, team — and wants to bring that intensity to ${company}`,
+    ],
+    searchChannels: [
+      `LinkedIn Recruiter — search for operators at known info-product, coaching, and education brands (Tony Robbins, Mindvalley, Strategic Coach, Brendon Burchard, Alex Hormozi, Dean Graziosi, Russell Brunson). Filter by revenue, growth, or commercial titles. Look for language like "funnel," "enrollment," "high-ticket," "launch," "event" in their summary`,
+      `Direct-response and funnel-builder communities — ClickFunnels community, Hormozi's Acquisition.com network, funnel hacker groups, coaching business masterminds. These are where operators in this archetype actually congregate`,
+      `LinkedIn Sales Navigator — search for people at coaching, education, and personal-brand companies posting about audience growth, funnel optimization, program launches, and high-ticket conversion`,
+      `Podcast guest lists from coaching, education, and creator-economy podcasts — people who have discussed scaling info-product businesses, event-driven sales, or audience monetization`,
+      `Event and experience company alumni — people who have scaled live/virtual events, summits, or workshop businesses understand the operational and commercial model`,
+      `Referral mining — ask operators in ${company}'s network: "Who is the best revenue operator you've seen at a coaching or education brand?"`,
+    ],
+    keywords: [
+      "high-ticket sales",
+      "funnel conversion",
+      "coaching business",
+      "program enrollment",
+      "audience monetization",
+      "webinar",
+      "VSL",
+      "live event",
+      `"${ctx.market.toLowerCase().split(" ")[0]}" AND "revenue"`,
+      "direct response",
+      "info product",
+      "creator economy",
+    ],
+    outreachAngle:
+      `Lead with their specific experience in the info-product or coaching world — a program they scaled, a funnel they built, an event they filled. Frame ${company} as a ${seatLabel(ctx)} opportunity where they'd own the revenue engine for a brand with real audience scale. Speak their language: "enrollment," "funnel," "high-ticket conversion," "program launch" — not SaaS jargon. Address motivators: ${motivatorPhrase(ctx)}. Preempt concerns: ${objectionPhrase(ctx)}. Close with a direct ask.`,
+    sampleBooleanSearch:
+      `("high-ticket" OR "coaching" OR "info product" OR "education business" OR "program launch" OR "funnel") AND ("revenue" OR "conversion" OR "enrollment" OR "audience" OR "growth") NOT ("software engineer" OR "SRE" OR "backend" OR "frontend" OR "recruiter" OR "talent acquisition")`,
+  }),
+
+  "healthcare-vertical": (base, company, ctx) => ({
+    targetProfiles: [
+      `${base.targetProfiles[0]} — with demonstrated familiarity with healthcare regulations (HIPAA, clinical workflows, or EHR integration)`,
+      `Operator from a healthtech or digital health company (${poolList(ctx)}) who has navigated the unique sales cycles, regulatory requirements, and stakeholder complexity of healthcare — understands that this market moves differently than horizontal SaaS`,
+      ...base.targetProfiles.slice(2).map((p) =>
+        p.includes("healthcare") ? p : `${p} — ideally with exposure to healthcare, clinical, or life sciences environments`
+      ),
+    ],
+    keywords: [
+      ...base.keywords.filter((k) => !k.includes("undefined")),
+      "healthcare",
+      "healthtech",
+      "digital health",
+      "HIPAA",
+      "clinical",
+      `"${ctx.market.toLowerCase().split(" ")[0]}" AND "health"`,
+    ].slice(0, 12),
+    sampleBooleanSearch:
+      `${base.sampleBooleanSearch.replace(/ NOT /, ` AND ("healthcare" OR "healthtech" OR "digital health" OR "clinical" OR "HIPAA") NOT `)}`,
+  }),
+
+  "professional-services": (base, company, ctx) => ({
+    outreachAngle:
+      `${base.outreachAngle} Speak to the professional services context: utilization, client relationships, practice building, and engagement-based delivery. Candidates from this world value intellectual challenge, client impact, and path to partnership or equity.`,
+    keywords: [
+      ...base.keywords.filter((k) => !k.includes("undefined")),
+      "consulting",
+      "advisory",
+      "professional services",
+      "practice",
+      "client engagement",
+    ].slice(0, 12),
+  }),
+
+  "dev-tools": (base, company, ctx) => ({
+    outreachAngle:
+      `${base.outreachAngle} Dev-tools context: candidates in this space value developer experience, community, and craft. Frame around the technical problem, the developer audience, and any open-source or community angle.`,
+    keywords: [
+      ...base.keywords.filter((k) => !k.includes("undefined")),
+      "developer tools",
+      "devtools",
+      "developer experience",
+      "open source",
+      "API",
+    ].slice(0, 12),
+  }),
+};
+
 export async function generateMockStrategy(
   _prompt: string,
   brief: HiringBrief,
@@ -271,20 +369,22 @@ export async function generateMockStrategy(
     outreachTone: archetypeResult.outreachTone,
   });
 
+  // Apply archetype-specific overrides if available
+  const override = ARCHETYPE_OVERRIDES[companyCtx.archetype];
+  const patched = override
+    ? { ...raw, ...override(raw, brief.company, companyCtx) }
+    : raw;
+
   // Enrich with archetype-specific channel hints (append, don't replace)
-  const enrichedChannels = [...raw.searchChannels];
+  const enrichedChannels = [...patched.searchChannels];
   for (const hint of archetypeResult.channelHints) {
     if (!enrichedChannels.some((ch) => ch.includes(hint.slice(0, 40)))) {
       enrichedChannels.push(`[${companyCtx.companyType}] ${hint}`);
     }
   }
 
-  // Append archetype outreach tone to the outreach angle
-  const enrichedOutreach = `${raw.outreachAngle} Context: ${archetypeResult.outreachTone}`;
-
   return {
-    ...raw,
+    ...patched,
     searchChannels: enrichedChannels.slice(0, 8),
-    outreachAngle: enrichedOutreach,
   };
 }
