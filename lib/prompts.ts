@@ -35,7 +35,7 @@ Role classification:
 - lifecycle stage: ${classification.lifecycleStage}
 
 Company context (pre-interpreted from the hiring brief):
-- Company type: ${companyCtx.companyType}
+- Company archetype: ${companyCtx.archetype} (${companyCtx.companyType})
 - Stage: ${companyCtx.stage}
 - Market/category: ${companyCtx.market}
 - Buyer/customer type: ${companyCtx.buyerType}
@@ -45,9 +45,17 @@ Company context (pre-interpreted from the hiring brief):
 - Likely candidate motivators: ${companyCtx.candidateMotivators.join("; ")}
 - Likely candidate objections: ${companyCtx.candidateObjections.join("; ")}
 
+CRITICAL — Company archetype matters:
+The company archetype ("${companyCtx.archetype}") determines the operating model, talent pools, and language that should appear in the strategy.
+- An info-product / coaching brand is NOT a SaaS company. Do not use SaaS metrics (ARR, churn, NRR) unless the brief explicitly mentions them. Use language like "high-ticket offers," "audience monetization," "event-driven sales," "funnel," "program enrollment."
+- A professional services firm is NOT a product company. Use language like "practice area," "client engagement," "utilization," "delivery," "partner track."
+- A healthcare / vertical SaaS company requires domain-specific signals (HIPAA, clinical workflows, EHR integration). Do not treat it like horizontal SaaS.
+- A developer tools company values community, open source, and developer experience. These signals should appear even in non-engineering roles.
+- A marketplace requires understanding of supply/demand dynamics, network effects, and GMV — these should inform the strategy even for non-product roles.
+
 Use the company context to:
-- Make target profiles specific to the company type, stage, and market — not generic
-- Tailor search channels to where candidates in this specific market actually surface
+- Make target profiles specific to the company archetype, stage, and market — not generic
+- Tailor search channels to where candidates for this type of company actually surface
 - Shape keywords to reflect the company's domain and buyer type
 - Write outreach that addresses real candidate motivators and preempts likely objections
 - Ensure the boolean search reflects the market and company type, not just the role

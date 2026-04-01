@@ -1,41 +1,31 @@
 import { HiringBrief, CompanyContext, CompanyStage, SeatType } from "./types";
+import { classifyCompany } from "./classify-company";
 
 export function interpretCompanyContext(brief: HiringBrief): CompanyContext {
   const text = `${brief.role} ${brief.company} ${brief.description}`.toLowerCase();
+  const archetypeResult = classifyCompany(brief);
+
+  // Merge archetype talent pools with brief-inferred pools, deduped
+  const briefPools = inferAdjacentPools(text);
+  const allPools = [...archetypeResult.talentPools];
+  for (const pool of briefPools) {
+    if (!allPools.some((p) => p.toLowerCase() === pool.toLowerCase())) {
+      allPools.push(pool);
+    }
+  }
 
   return {
-    companyType: inferCompanyType(text),
+    archetype: archetypeResult.archetype,
+    companyType: archetypeResult.label,
     stage: inferStage(text),
     market: inferMarket(text, brief),
     buyerType: inferBuyerType(text),
     talentBrandStrength: inferTalentBrand(text, brief),
-    adjacentTalentPools: inferAdjacentPools(text),
+    adjacentTalentPools: allPools,
     candidateMotivators: inferMotivators(text),
     candidateObjections: inferObjections(text, brief),
     seatType: inferSeatType(text),
   };
-}
-
-function inferCompanyType(text: string): string {
-  if (has(text, "saas", "software platform", "product-led"))
-    return "B2B SaaS";
-  if (has(text, "marketplace", "two-sided", "platform"))
-    return "Marketplace / Platform";
-  if (has(text, "consulting", "advisory", "professional services"))
-    return "Professional Services / Consulting";
-  if (has(text, "coaching", "leadership development", "transformation", "training"))
-    return "Leadership Development / Transformation";
-  if (has(text, "agency", "creative agency", "marketing agency"))
-    return "Agency";
-  if (has(text, "fintech", "financial", "banking", "payments"))
-    return "Fintech";
-  if (has(text, "health", "healthcare", "biotech", "pharma"))
-    return "Healthcare / Life Sciences";
-  if (has(text, "e-commerce", "ecommerce", "retail", "d2c", "dtc"))
-    return "E-commerce / Retail";
-  if (has(text, "infrastructure", "devtools", "developer tools"))
-    return "Developer Tools / Infrastructure";
-  return "Technology / Services";
 }
 
 function inferStage(text: string): CompanyStage {

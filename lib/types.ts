@@ -20,6 +20,16 @@ export interface RoleClassification {
   lifecycleStage: string;
 }
 
+export type CompanyArchetype =
+  | "b2b-saas"
+  | "info-product"
+  | "professional-services"
+  | "marketplace"
+  | "dev-tools"
+  | "healthcare-vertical"
+  | "consumer-prosumer"
+  | "general";
+
 export type SeatType = "builder" | "scaler" | "optimizer" | "turnaround";
 
 export type CompanyStage =
@@ -35,6 +45,7 @@ export type CompanyStage =
   | "unknown";
 
 export interface CompanyContext {
+  archetype: CompanyArchetype;
   companyType: string;
   stage: CompanyStage;
   market: string;

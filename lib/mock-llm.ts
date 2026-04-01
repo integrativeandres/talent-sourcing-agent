@@ -5,11 +5,14 @@ import {
   RoleFamily,
   SourcingStrategy,
 } from "./types";
+import { classifyCompany } from "./classify-company";
 
 interface TemplateInputs {
   company: string;
   ctx: CompanyContext;
   brief: HiringBrief;
+  channelHints: string[];
+  outreachTone: string;
 }
 
 type StrategyTemplate = (inputs: TemplateInputs) => SourcingStrategy;
@@ -47,12 +50,12 @@ function objectionPhrase(ctx: CompanyContext): string {
 }
 
 function poolList(ctx: CompanyContext): string {
-  return ctx.adjacentTalentPools.join(", ");
+  return ctx.adjacentTalentPools.slice(0, 4).join(", ");
 }
 
 const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
 
-  sales: ({ company, ctx }) => ({
+  sales: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Revenue builder at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who has closed complex deals selling to ${ctx.buyerType} — someone who owns a full deal cycle, not just account management, and is motivated by ${seatLabel(ctx)}`,
       `Enterprise seller or managing director at a firm adjacent to ${company}'s market (${poolList(ctx)}) who has personally built a book of business selling high-ticket services or solutions to ${ctx.buyerType} — speaks in outcomes, not activity metrics`,
@@ -86,7 +89,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `("enterprise sales" OR "vp sales" OR "head of sales" OR "business development" OR "managing director") AND ("pipeline" OR "quota" OR "revenue" OR "executive buyers" OR "deal cycle") AND ("${ctx.market.toLowerCase().split(" ")[0]}" OR "${ctx.companyType.toLowerCase().split(" ")[0]}") NOT ("growth marketing" OR "demand generation" OR "customer success" OR "software engineer" OR "recruiter" OR "talent acquisition")`,
   }),
 
-  marketing: ({ company, ctx }) => ({
+  marketing: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Growth marketing leader at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who has owned acquisition and conversion selling to ${ctx.buyerType} — someone who has built a demand engine, not just run campaigns, and is motivated by ${seatLabel(ctx)}`,
       `Demand gen operator at a company with a similar buyer persona (${ctx.buyerType.toLowerCase()}) who has built funnels, channel strategy, and experimentation loops with measurable impact on pipeline and conversion`,
@@ -121,7 +124,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `("growth marketing" OR "demand generation" OR "performance marketing" OR "head of marketing" OR "VP marketing") AND ("acquisition" OR "conversion" OR "funnel" OR "experimentation" OR "CAC") AND ("${ctx.market.toLowerCase().split(" ")[0]}" OR "${ctx.companyType.toLowerCase().split(" ")[0]}") NOT ("vp sales" OR "account executive" OR "enterprise seller" OR "software engineer" OR "recruiter")`,
   }),
 
-  customer_success: ({ company, ctx }) => ({
+  customer_success: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Customer success leader at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who owns retention, expansion, and onboarding for ${ctx.buyerType.toLowerCase()} — someone who has built post-sale systems, not just managed accounts, and is motivated by ${seatLabel(ctx)}`,
       `VP or Head of CS at a company with a similar buyer persona (${ctx.buyerType.toLowerCase()}) who has built health scoring, renewal playbooks, and expansion motion from scratch — understands what drives adoption in this market`,
@@ -155,7 +158,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `("customer success" OR "head of customer success" OR "vp customer success" OR "director of CS") AND ("nrr" OR "retention" OR "expansion" OR "onboarding" OR "adoption") AND ("${ctx.market.toLowerCase().split(" ")[0]}" OR "${ctx.companyType.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "enterprise sales" OR "support agent" OR "call center" OR "software engineer" OR "recruiter")`,
   }),
 
-  engineering: ({ company, ctx }) => ({
+  engineering: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Founding-level engineer at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who has shipped core product systems from scratch and is looking for more technical ownership at ${company} — motivated by ${seatLabel(ctx)}`,
       `Senior backend or full-stack engineer at a strong product company in ${ctx.market} (or adjacent: ${poolList(ctx)}) who wants to move closer to founders and own architecture decisions in a ${seatLabel(ctx)} environment`,
@@ -189,7 +192,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `("founding engineer" OR "staff engineer" OR "senior backend engineer" OR "tech lead" OR "head of engineering") AND ("startup" OR "shipped" OR "architecture" OR "${ctx.market.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "sales" OR "marketing" OR "recruiter" OR "talent acquisition")`,
   }),
 
-  operations: ({ company, ctx }) => ({
+  operations: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Operations leader at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who has built workflows, systems, and execution muscle during a period of ${seatLabel(ctx)} — not just maintained existing processes`,
       `Cross-functional operator at a company serving ${ctx.buyerType.toLowerCase()} who thrives in ambiguity and can own process, coordination, and execution quality across multiple functions`,
@@ -223,7 +226,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `("operations" OR "business operations" OR "chief of staff" OR "head of ops" OR "VP operations") AND ("process" OR "workflow" OR "systems" OR "execution" OR "${ctx.market.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "software engineer" OR "paid media" OR "recruiter")`,
   }),
 
-  general: ({ company, ctx }) => ({
+  general: ({ company, ctx, channelHints, outreachTone }) => ({
     targetProfiles: [
       `Functional leader at a ${stageLabel(ctx)} ${ctx.companyType} company in ${ctx.market} who has built their function with measurable impact and is looking for a ${seatLabel(ctx)} seat at ${company}`,
       `Operator from ${poolList(ctx)} who has worked in similarly paced, high-ownership environments serving ${ctx.buyerType.toLowerCase()}`,
@@ -256,6 +259,31 @@ export async function generateMockStrategy(
   classification: RoleClassification,
   companyCtx: CompanyContext
 ): Promise<SourcingStrategy> {
+  const archetypeResult = classifyCompany(brief);
   const template = TEMPLATES[classification.family];
-  return template({ company: brief.company, ctx: companyCtx, brief });
+
+  const raw = template({
+    company: brief.company,
+    ctx: companyCtx,
+    brief,
+    channelHints: archetypeResult.channelHints,
+    outreachTone: archetypeResult.outreachTone,
+  });
+
+  // Enrich with archetype-specific channel hints (append, don't replace)
+  const enrichedChannels = [...raw.searchChannels];
+  for (const hint of archetypeResult.channelHints) {
+    if (!enrichedChannels.some((ch) => ch.includes(hint.slice(0, 40)))) {
+      enrichedChannels.push(`[${companyCtx.companyType}] ${hint}`);
+    }
+  }
+
+  // Append archetype outreach tone to the outreach angle
+  const enrichedOutreach = `${raw.outreachAngle} Context: ${archetypeResult.outreachTone}`;
+
+  return {
+    ...raw,
+    searchChannels: enrichedChannels.slice(0, 8),
+    outreachAngle: enrichedOutreach,
+  };
 }
