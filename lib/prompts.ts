@@ -1,27 +1,32 @@
-import { HiringBrief, RoleClassification } from "./types";
+import { HiringBrief, RoleClassification, CompanyContext } from "./types";
 
 export function buildSourcingPrompt(
   brief: HiringBrief,
-  classification: RoleClassification
+  classification: RoleClassification,
+  companyCtx: CompanyContext
 ): string {
   return `
-You are an expert recruiting intelligence system.
+You are the top .01% of elite recruiting intelligence systems used by a top-tier, high-conversion search operator.
 
-Your job is to generate a sourcing strategy for a specific role.
+Your job is to generate a high-quality sourcing strategy for a specific role.
+
+You are not writing generic recruiting advice.
+You are producing a recruiter-grade search blueprint that should help identify highly relevant passive candidates quickly and accurately.
 
 Before generating the sourcing strategy, explicitly determine:
-1. the primary function of the role:
+
+1. What is the PRIMARY function of this role?
 - Build product
 - Generate demand
 - Close revenue
-- Retain & expand customers
-- Operate / deliver services
+- Retain and expand customers
+- Operate and deliver services
 
-2. the primary metric this role owns
+2. What metric or business outcome does this role most directly own?
 
-3. the stage of the lifecycle this role sits in
+3. Where does this role sit in the company lifecycle and customer lifecycle?
 
-Use this classification to guide all downstream sourcing decisions.
+Use this classification to guide ALL downstream sourcing decisions.
 
 Role classification:
 - family: ${classification.family}
@@ -29,15 +34,40 @@ Role classification:
 - primary metric: ${classification.primaryMetric}
 - lifecycle stage: ${classification.lifecycleStage}
 
+Company context (pre-interpreted from the hiring brief):
+- Company type: ${companyCtx.companyType}
+- Stage: ${companyCtx.stage}
+- Market/category: ${companyCtx.market}
+- Buyer/customer type: ${companyCtx.buyerType}
+- Talent brand strength: ${companyCtx.talentBrandStrength}
+- Seat type: ${companyCtx.seatType}
+- Adjacent talent pools: ${companyCtx.adjacentTalentPools.join("; ")}
+- Likely candidate motivators: ${companyCtx.candidateMotivators.join("; ")}
+- Likely candidate objections: ${companyCtx.candidateObjections.join("; ")}
+
+Use the company context to:
+- Make target profiles specific to the company type, stage, and market — not generic
+- Tailor search channels to where candidates in this specific market actually surface
+- Shape keywords to reflect the company's domain and buyer type
+- Write outreach that addresses real candidate motivators and preempts likely objections
+- Ensure the boolean search reflects the market and company type, not just the role
+
 Role guardrails:
-- If the role is marketing, do not include sales titles, quota language, pipeline language, or enterprise seller archetypes. Include acquisition, conversion, funnels, experimentation, lifecycle, demand gen, or channel language where relevant.
-- If the role is sales, do not include marketing language like CAC, paid media, SEO, or lifecycle marketing. Include pipeline, closing, quota, executive buyers, deal cycle, and revenue ownership.
-- If the role is customer success, do not collapse into sales or support. Include retention, expansion, onboarding, adoption, NRR, customer lifecycle, and post-sale ownership.
-- If the role is engineering, do not include commercial seller or marketing language. Include systems, architecture, shipping, technical ownership, stack, and product-building signals.
+- If the role is marketing, do not include sales titles, quota language, pipeline ownership language, or enterprise seller archetypes. Include acquisition, conversion, demand gen, channel strategy, experimentation, funnels, lifecycle, CAC/LTV thinking, and growth systems where relevant.
+- If the role is sales, do not include marketing language like CAC, paid media, SEO, growth loops, funnel optimization, or lifecycle marketing. Include complex deal ownership, pipeline creation, quota-carrying or revenue ownership, executive buyers, multi-threading, long sales cycles, and commercial strategy.
+- If the role is customer success, do not collapse into sales or support. Include retention, expansion, onboarding, adoption, renewals, NRR, health scoring, customer lifecycle, and post-sale commercial ownership.
+- If the role is engineering, do not include commercial seller or marketing language. Include product/system architecture, technical judgment, shipping velocity, stack ownership, technical scope, and product-building signals.
+- If the role is operations, focus on process design, workflow ownership, execution rigor, systems, cross-functional coordination, and operational leverage.
 
 Interpret the ICP through the lens of the role.
-Do not assume the ICP describes the same function as the role.
+Do NOT assume the ICP describes the exact same function as the role.
 Translate ICP traits into the correct functional equivalent for the role.
+
+You must optimize for:
+- top-signal candidates, not broad candidate pools
+- candidates who are likely to outperform in this exact seat
+- specificity over breadth
+- search usefulness over sounding impressive
 
 Return valid JSON only with this exact shape:
 {
@@ -48,12 +78,36 @@ Return valid JSON only with this exact shape:
   "sampleBooleanSearch": "..."
 }
 
-Requirements:
-- targetProfiles must describe real candidate archetypes, not generic seniority labels
-- searchChannels must be tactical and role-specific
-- keywords must be usable and relevant to the role family
-- outreachAngle must sound like a recruiter speaking the candidate's language
-- sampleBooleanSearch must be specific to the role and avoid adjacent-role contamination
+Field-by-field requirements:
+
+1. targetProfiles
+- Return 4 to 6 target profiles
+- Each profile must reflect the company context: stage, market, buyer type, and seat type
+- Each should describe: current likely seat, company type or stage, what they own, why they map to this role at this company
+- Reference adjacent talent pools where relevant
+- Do not use generic phrases like "5+ years of experience" unless attached to something meaningful
+
+2. searchChannels
+- Return 4 to 6 channels
+- Be tactical and specific to both the role AND the company's market/stage
+- Include where top candidates for this specific company context would surface
+- Mention what to look for in each channel
+
+3. keywords
+- Return 8 to 12 high-signal keywords or short search phrases
+- Calibrate to the company's market and buyer type, not just the role function
+- Prioritize specificity and usefulness
+
+4. outreachAngle
+- Write like a sharp recruiter reaching out to a high-value passive candidate
+- Must reflect the company context: what makes this seat compelling given the stage, market, and seat type
+- Address likely candidate motivators and preempt key objections
+- Avoid generic hype language
+
+5. sampleBooleanSearch
+- Must include terms specific to the company's market and adjacent talent pools
+- Must avoid adjacent-role contamination
+- Must be production-usable
 
 Role: ${brief.role}
 Company: ${brief.company}

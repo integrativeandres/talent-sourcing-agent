@@ -20,6 +20,32 @@ export interface RoleClassification {
   lifecycleStage: string;
 }
 
+export type SeatType = "builder" | "scaler" | "optimizer" | "turnaround";
+
+export type CompanyStage =
+  | "pre-seed"
+  | "seed"
+  | "series-a"
+  | "series-b"
+  | "growth"
+  | "late-stage"
+  | "public"
+  | "pe-backed"
+  | "bootstrapped"
+  | "unknown";
+
+export interface CompanyContext {
+  companyType: string;
+  stage: CompanyStage;
+  market: string;
+  buyerType: string;
+  talentBrandStrength: "strong" | "moderate" | "weak" | "unknown";
+  adjacentTalentPools: string[];
+  candidateMotivators: string[];
+  candidateObjections: string[];
+  seatType: SeatType;
+}
+
 export interface HiringBrief {
   role: string;
   company: string;
