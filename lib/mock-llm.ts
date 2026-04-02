@@ -53,6 +53,34 @@ function poolList(ctx: CompanyContext): string {
   return ctx.adjacentTalentPools.slice(0, 4).join(", ");
 }
 
+// Domain descriptor for boolean queries — never company name, always market/archetype signal
+function domainTerms(ctx: CompanyContext): string {
+  const ARCHETYPE_BOOLEAN_TERMS: Record<string, string> = {
+    "b2b-saas": '"SaaS" OR "B2B" OR "enterprise software"',
+    "info-product": '"coaching" OR "education" OR "info product" OR "high-ticket"',
+    "professional-services": '"consulting" OR "advisory" OR "professional services"',
+    "marketplace": '"marketplace" OR "platform" OR "two-sided"',
+    "dev-tools": '"developer tools" OR "devtools" OR "infrastructure"',
+    "healthcare-vertical": '"healthcare" OR "healthtech" OR "digital health"',
+    "consumer-prosumer": '"consumer" OR "D2C" OR "B2C"',
+  };
+  return ARCHETYPE_BOOLEAN_TERMS[ctx.archetype] || `"B2B" OR "enterprise"`;
+}
+
+// Plain keyword terms for the keywords array — no boolean operators, no company names
+function domainKeywords(ctx: CompanyContext): string[] {
+  const ARCHETYPE_KW: Record<string, string[]> = {
+    "b2b-saas": ["SaaS", "B2B", "enterprise software"],
+    "info-product": ["coaching", "info product", "high-ticket", "education business"],
+    "professional-services": ["consulting", "advisory", "professional services"],
+    "marketplace": ["marketplace", "platform", "two-sided"],
+    "dev-tools": ["developer tools", "devtools", "infrastructure"],
+    "healthcare-vertical": ["healthcare", "healthtech", "digital health"],
+    "consumer-prosumer": ["consumer", "D2C", "B2C"],
+  };
+  return ARCHETYPE_KW[ctx.archetype] || ["B2B", "enterprise"];
+}
+
 const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
 
 
@@ -76,14 +104,14 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       "book of business",
       "deal cycle",
       `"closed" AND "${ctx.buyerType.toLowerCase().split(",")[0]}"`,
-      `"sales" AND "${ctx.market.toLowerCase()}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "proof of value",
       "complex sale",
     ],
     outreachAngle:
       `Lead with a deal they closed or a buyer persona they understand. Frame ${company} as a ${seatLabel(ctx)} opportunity selling to ${ctx.buyerType.toLowerCase()} in ${ctx.market}. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a direct 20-min ask.`,
     sampleBooleanSearch:
-      `("vp sales" OR "head of sales" OR "enterprise sales" OR "managing director") AND ("closed" OR "deal cycle" OR "executive sponsor" OR "multi-threaded" OR "book of business") AND ("${ctx.market.toLowerCase().split(" ")[0]}") NOT ("demand generation" OR "customer success" OR "software engineer" OR "recruiter")`,
+      `("vp sales" OR "head of sales" OR "enterprise sales" OR "managing director") AND ("closed" OR "deal cycle" OR "executive sponsor" OR "multi-threaded" OR "book of business") AND (${domainTerms(ctx)}) NOT ("demand generation" OR "customer success" OR "software engineer" OR "recruiter")`,
   }),
 
   marketing: ({ company, ctx, channelHints, outreachTone }) => ({
@@ -105,7 +133,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       "conversion rate",
       "experimentation velocity",
       "channel mix",
-      `"demand gen" AND "${ctx.market.toLowerCase().split(" ")[0]}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "attribution model",
       "paid + organic",
       "funnel optimization",
@@ -113,7 +141,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
     outreachAngle:
       `Lead with a growth signal they own — a channel they scaled, an experiment they ran, a CAC number they hit. Frame ${company} as a ${seatLabel(ctx)} opportunity owning the demand engine for ${ctx.buyerType.toLowerCase()}. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a low-friction ask.`,
     sampleBooleanSearch:
-      `("head of marketing" OR "VP marketing" OR "demand generation" OR "growth marketing") AND ("CAC" OR "conversion" OR "experimentation" OR "attribution" OR "funnel") AND ("${ctx.market.toLowerCase().split(" ")[0]}") NOT ("vp sales" OR "account executive" OR "software engineer" OR "recruiter")`,
+      `("head of marketing" OR "VP marketing" OR "demand generation" OR "growth marketing") AND ("CAC" OR "conversion" OR "experimentation" OR "attribution" OR "funnel") AND (${domainTerms(ctx)}) NOT ("vp sales" OR "account executive" OR "software engineer" OR "recruiter")`,
   }),
 
   customer_success: ({ company, ctx, channelHints, outreachTone }) => ({
@@ -135,7 +163,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       "health score",
       "renewal playbook",
       "land and expand",
-      `"customer success" AND "${ctx.market.toLowerCase().split(" ")[0]}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "post-sale",
       "onboarding",
       "adoption",
@@ -143,7 +171,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
     outreachAngle:
       `Lead with the post-sale challenge: NRR, onboarding complexity, or expansion opportunity for ${ctx.buyerType.toLowerCase()} in ${ctx.market}. Frame ${company} as a ${seatLabel(ctx)} seat owning the full customer lifecycle. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a low-friction ask.`,
     sampleBooleanSearch:
-      `("head of customer success" OR "vp customer success" OR "director CS") AND ("NRR" OR "retention" OR "expansion" OR "onboarding" OR "health score") AND ("${ctx.market.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "support agent" OR "call center" OR "software engineer" OR "recruiter")`,
+      `("head of customer success" OR "vp customer success" OR "director CS") AND ("NRR" OR "retention" OR "expansion" OR "onboarding" OR "health score") AND (${domainTerms(ctx)}) NOT ("account executive" OR "support agent" OR "call center" OR "software engineer" OR "recruiter")`,
   }),
 
   engineering: ({ company, ctx, channelHints, outreachTone }) => ({
@@ -165,7 +193,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       "system design",
       "shipped to production",
       "technical architecture",
-      `"engineer" AND "${ctx.market.toLowerCase().split(" ")[0]}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "built from scratch",
       "owned the stack",
       "full-stack",
@@ -173,7 +201,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
     outreachAngle:
       `Lead with a technical detail from their work — a system they built, a repo, an architecture decision. Connect it to what they'd own at ${company}: the systems challenge of building for ${ctx.buyerType.toLowerCase()} in a ${seatLabel(ctx)} seat. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a low-friction ask.`,
     sampleBooleanSearch:
-      `("founding engineer" OR "staff engineer" OR "tech lead" OR "head of engineering") AND ("shipped" OR "architecture" OR "system design" OR "built from scratch") AND ("${ctx.market.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "marketing" OR "recruiter" OR "talent acquisition")`,
+      `("founding engineer" OR "staff engineer" OR "tech lead" OR "head of engineering") AND ("shipped" OR "architecture" OR "system design" OR "built from scratch") AND (${domainTerms(ctx)}) NOT ("account executive" OR "marketing" OR "recruiter" OR "talent acquisition")`,
   }),
 
   operations: ({ company, ctx, channelHints, outreachTone }) => ({
@@ -194,7 +222,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       "cross-functional coordination",
       "process design",
       "chief of staff",
-      `"operations" AND "${ctx.market.toLowerCase().split(" ")[0]}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "throughput",
       "org design",
       "built from scratch",
@@ -202,7 +230,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
     outreachAngle:
       `Lead with the operational challenge: what needs to be built or fixed in a ${seatLabel(ctx)} seat at ${company}. Reference ${ctx.market} complexity and serving ${ctx.buyerType.toLowerCase()}. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a direct ask.`,
     sampleBooleanSearch:
-      `("head of ops" OR "VP operations" OR "chief of staff" OR "COO") AND ("process design" OR "cross-functional" OR "operational infrastructure" OR "throughput") AND ("${ctx.market.toLowerCase().split(" ")[0]}") NOT ("account executive" OR "software engineer" OR "recruiter")`,
+      `("head of ops" OR "VP operations" OR "chief of staff" OR "COO") AND ("process design" OR "cross-functional" OR "operational infrastructure" OR "throughput") AND (${domainTerms(ctx)}) NOT ("account executive" OR "software engineer" OR "recruiter")`,
   }),
 
   general: ({ company, ctx, channelHints, outreachTone }) => ({
@@ -217,7 +245,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
       `Referral mining — "Who is the strongest operator you've seen in ${ctx.market}?"`,
     ],
     keywords: [
-      `"${ctx.market.toLowerCase().split(" ")[0]}"`,
+      ...domainKeywords(ctx).slice(0, 1),
       "built from scratch",
       "owned the function",
       "measurable impact",
@@ -225,7 +253,7 @@ const TEMPLATES: Record<RoleFamily, StrategyTemplate> = {
     outreachAngle:
       `Lead with a specific signal from their background in ${ctx.market}. Frame ${company} as a ${seatLabel(ctx)} opportunity. Motivators: ${motivatorPhrase(ctx)}. Preempt: ${objectionPhrase(ctx)}. Close with a direct ask.`,
     sampleBooleanSearch:
-      `("head of" OR "VP" OR "director") AND ("built" OR "owned" OR "${ctx.market.toLowerCase().split(" ")[0]}") NOT ("recruiter")`,
+      `("head of" OR "VP" OR "director") AND ("built" OR "owned") AND (${domainTerms(ctx)}) NOT ("recruiter")`,
   }),
 };
 
@@ -288,7 +316,7 @@ const ARCHETYPE_OVERRIDES: Partial<Record<CompanyContext["archetype"], Archetype
       "digital health",
       "HIPAA",
       "clinical",
-      `"${ctx.market.toLowerCase().split(" ")[0]}" AND "health"`,
+      "clinical workflows",
     ].slice(0, 12),
     sampleBooleanSearch:
       `${base.sampleBooleanSearch.replace(/ NOT /, ` AND ("healthcare" OR "healthtech" OR "digital health" OR "clinical" OR "HIPAA") NOT `)}`,

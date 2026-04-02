@@ -57,6 +57,16 @@ export interface CompanyContext {
   seatType: SeatType;
 }
 
+export type DepthLevel = "L1" | "L2" | "L3";
+
+export interface RoleRubric {
+  roleType: string;
+  mustSignals: string[];
+  strongSignals: string[];
+  antiSignals: string[];
+  languageConstraints: string[];
+}
+
 export interface HiringBrief {
   role: string;
   company: string;
